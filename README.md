@@ -1,6 +1,6 @@
 <div align="center">
 
-# CodeGraph
+<img src="site/public/logo.svg" alt="CodeGraph" height="32">
 
 ### Supercharge Claude Code, Cursor, Codex, OpenCode, and Hermes Agent with Semantic Code Intelligence
 
