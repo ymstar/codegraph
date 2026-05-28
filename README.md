@@ -8,6 +8,8 @@
 
 ### [Documentation & Website →](https://colbymchenry.github.io/codegraph/)
 
+<a href="https://trendshift.io/repositories/26949" target="_blank"><img src="https://trendshift.io/api/badge/repositories/26949" alt="colbymchenry%2Fcodegraph | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
+
 [![npm version](https://img.shields.io/npm/v/@colbymchenry/codegraph.svg)](https://www.npmjs.com/package/@colbymchenry/codegraph)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Self-contained](https://img.shields.io/badge/Node.js-bundled%20%C2%B7%20none%20required-brightgreen.svg)](https://nodejs.org/)
