@@ -10,7 +10,7 @@ import * as path from 'path';
 import { Parser, Language as WasmLanguage } from 'web-tree-sitter';
 import { Language } from '../types';
 
-export type GrammarLanguage = Exclude<Language, 'svelte' | 'vue' | 'liquid' | 'yaml' | 'twig' | 'unknown'>;
+export type GrammarLanguage = Exclude<Language, 'svelte' | 'vue' | 'liquid' | 'yaml' | 'twig' | 'xml' | 'properties' | 'unknown'>;
 
 /**
  * WASM filename map — maps each language to its .wasm grammar file
@@ -37,6 +37,7 @@ const WASM_GRAMMAR_FILES: Record<GrammarLanguage, string> = {
   scala: 'tree-sitter-scala.wasm',
   lua: 'tree-sitter-lua.wasm',
   luau: 'tree-sitter-luau.wasm',
+  objc: 'tree-sitter-objc.wasm',
 };
 
 /**
@@ -92,6 +93,15 @@ export const EXTENSION_MAP: Record<string, Language> = {
   '.sc': 'scala',
   '.lua': 'lua',
   '.luau': 'luau',
+  '.m': 'objc',
+  '.mm': 'objc',
+  // XML: file-level tracking; the MyBatis extractor matches `<mapper namespace="...">`
+  // shape and emits SQL-statement nodes (other XML returns empty).
+  '.xml': 'xml',
+  // Spring config: `application.properties` / `application-*.properties`. Same
+  // shape as the `.yml` variants — the YAML/properties extractor emits one node
+  // per leaf key, and the Spring resolver links `@Value("${k}")` references.
+  '.properties': 'properties',
 };
 
 /**
@@ -228,9 +238,10 @@ export function detectLanguage(filePath: string, source?: string): Language {
   const ext = filePath.substring(filePath.lastIndexOf('.')).toLowerCase();
   const lang = EXTENSION_MAP[ext] || 'unknown';
 
-  // .h files could be C or C++ — check source content for C++ features
+  // .h files could be C, C++, or Objective-C — check source content
   if (lang === 'c' && ext === '.h' && source) {
     if (looksLikeCpp(source)) return 'cpp';
+    if (looksLikeObjc(source)) return 'objc';
   }
 
   return lang;
@@ -246,6 +257,14 @@ function looksLikeCpp(source: string): boolean {
 }
 
 /**
+ * Heuristic: does a .h file contain Objective-C constructs?
+ */
+function looksLikeObjc(source: string): boolean {
+  const sample = source.substring(0, 8192);
+  return /@(?:interface|implementation|protocol|synthesize)\b/.test(sample);
+}
+
+/**
  * Check if a language is supported (has a grammar defined).
  * Returns true if the grammar exists, even if not yet loaded.
  */
@@ -255,6 +274,8 @@ export function isLanguageSupported(language: Language): boolean {
   if (language === 'liquid') return true; // custom regex extractor
   if (language === 'yaml') return true; // file-level tracking only; Drupal routing extraction via framework resolver
   if (language === 'twig') return true; // file-level tracking only
+  if (language === 'xml') return true; // MyBatis mapper extractor
+  if (language === 'properties') return true; // Spring config keys
   if (language === 'unknown') return false;
   return language in WASM_GRAMMAR_FILES;
 }
@@ -265,6 +286,7 @@ export function isLanguageSupported(language: Language): boolean {
 export function isGrammarLoaded(language: Language): boolean {
   if (language === 'svelte' || language === 'vue' || language === 'liquid') return true;
   if (language === 'yaml' || language === 'twig') return true; // no WASM grammar needed
+  if (language === 'xml' || language === 'properties') return true; // no WASM grammar needed
   return languageCache.has(language);
 }
 
@@ -342,8 +364,11 @@ export function getLanguageDisplayName(language: Language): string {
     scala: 'Scala',
     lua: 'Lua',
     luau: 'Luau',
+    objc: 'Objective-C',
     yaml: 'YAML',
     twig: 'Twig',
+    xml: 'XML',
+    properties: 'Java properties',
     unknown: 'Unknown',
   };
   return names[language] || language;
